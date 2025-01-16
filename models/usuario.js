@@ -28,7 +28,6 @@ const Usuario = sequelize.define(
     },
     rolId: { // Foreign key
       type: DataTypes.INTEGER,
-      defaultValue: 2, // Valor predeterminado 2 (Usuario), valor 1 (Administrador)
       references: {
         model: Rol,
         key: 'id',
