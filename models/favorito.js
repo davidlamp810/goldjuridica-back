@@ -1,6 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
-const Usuario = require("./usuario");
+const Rol = require("./rol");
 const Producto = require("./producto");
 
 const Favorito = sequelize.define("Favorito", {
@@ -9,11 +9,11 @@ const Favorito = sequelize.define("Favorito", {
     primaryKey: true,
     autoIncrement: true,
   },
-  usuario_id: {
+  rolId: {  // Cambié 'usuario_id' por 'rolId'
     type: DataTypes.INTEGER,
     references: {
-      model: Usuario,
-      key: 'id',
+      model: Rol,
+      key: 'Id',
     },
   },
   producto_id: {
@@ -29,7 +29,7 @@ const Favorito = sequelize.define("Favorito", {
 });
 
 // Establecer las relaciones
-Usuario.belongsToMany(Producto, { through: Favorito, foreignKey: 'usuario_id', as: 'favoritos' });
-Producto.belongsToMany(Usuario, { through: Favorito, foreignKey: 'producto_id', as: 'usuariosFavoritos' });
+Rol.belongsToMany(Producto, { through: Favorito, foreignKey: 'rolId', as: 'favoritos' });  // Cambié 'usuario_id' por 'rolId'
+Producto.belongsToMany(Rol, { through: Favorito, foreignKey: 'producto_id', as: 'rolesFavoritos' });  // Cambié 'usuariosFavoritos' por 'rolesFavoritos'
 
 module.exports = Favorito;

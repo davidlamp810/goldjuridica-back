@@ -10,7 +10,6 @@ exports.crearUsuario = async (req, res) => {
   try {
     const { nombre, apellido, email, password, rolId } = req.body;
 
-    // Agregar un console.log para verificar los datos recibidos
     console.log("Datos recibidos para la creación de usuario:", req.body);
 
     // Verificar si el usuario ya existe
@@ -19,7 +18,7 @@ exports.crearUsuario = async (req, res) => {
       return res.status(400).json({ message: "El usuario ya existe" });
     }
 
-    // Validar que el rolId sea válido (opcional)
+    // Validar que el rolId sea válido
     const rolExistente = await Rol.findByPk(rolId);
     if (!rolExistente) {
       return res.status(400).json({ message: "El rol especificado no existe" });
@@ -34,7 +33,6 @@ exports.crearUsuario = async (req, res) => {
       rolId,
     });
 
-    // Verificar los datos del nuevo usuario
     console.log("Usuario creado:", nuevoUsuario);
 
     res.status(201).json(nuevoUsuario);
@@ -47,15 +45,12 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Buscar el usuario por email
     const usuario = await Usuario.findOne({ where: { email } });
     if (!usuario) {
       return res.status(400).json({ message: "Usuario no encontrado" });
     }
 
-    // Verificar la contraseña
     const isMatch = await bcrypt.compare(password, usuario.password);
-    console.log("password: " + password);  // Verificar la contraseña
     if (!isMatch) {
       return res.status(400).json({ message: "Contraseña incorrecta" });
     }
@@ -82,7 +77,6 @@ exports.obtenerUsuarios = async (req, res) => {
       },
     });
 
-    // Verificar los usuarios obtenidos
     console.log("Usuarios obtenidos:", usuarios);
 
     res.json(usuarios);
@@ -95,13 +89,11 @@ exports.cambiarRol = async (req, res) => {
   try {
     const { id, rolId } = req.body;
 
-    // Verificar si el usuario existe
     const usuario = await Usuario.findByPk(id);
     if (!usuario) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    // Actualizar el rol del usuario
     usuario.rolId = rolId;
     await usuario.save();
 
@@ -113,12 +105,12 @@ exports.cambiarRol = async (req, res) => {
 
 // Marcar o desmarcar producto como favorito
 exports.toggleFavorito = async (req, res) => {
-  const { usuarioId, productoId } = req.body;
+  const { rolId, productoId } = req.body; // Cambié usuarioId por rolId
 
   try {
     // Verificar si ya existe el favorito
     const favoritoExistente = await Favorito.findOne({
-      where: { usuario_id: usuarioId, producto_id: productoId },
+      where: { rolId: rolId, producto_id: productoId }, // Cambié usuario_id por rolId
     });
 
     if (favoritoExistente) {
@@ -127,7 +119,7 @@ exports.toggleFavorito = async (req, res) => {
       return res.json({ message: "Producto eliminado de favoritos" });
     } else {
       // Si no existe, crear el favorito (marcar como favorito)
-      await Favorito.create({ usuario_id: usuarioId, producto_id: productoId });
+      await Favorito.create({ rolId: rolId, producto_id: productoId }); // Cambié usuario_id por rolId
       return res.json({ message: "Producto agregado a favoritos" });
     }
   } catch (error) {
@@ -135,16 +127,17 @@ exports.toggleFavorito = async (req, res) => {
   }
 };
 
-// Obtener la lista de favoritos del usuario
+// Obtener la lista de favoritos del rol
 exports.obtenerFavoritos = async (req, res) => {
-  const { usuarioId } = req.params;
+  const { rolId } = req.params; // Cambié usuarioId por rolId
 
   try {
-    const usuario = await Usuario.findByPk(usuarioId, {
+    // Buscar los favoritos del rol
+    const rol = await Rol.findByPk(rolId, {
       include: [
         {
           model: Producto,
-          as: "favoritos",
+          as: "favoritos", // Asegúrate de que el alias esté bien configurado en el modelo
           include: [
             { model: Imagen, as: "imagenes" }, // Incluir imágenes del producto si es necesario
             { model: Caracteristica, as: "caracteristicas" }, // Incluir características del producto si es necesario
@@ -153,44 +146,40 @@ exports.obtenerFavoritos = async (req, res) => {
       ],
     });
 
-    if (!usuario) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+    if (!rol) {
+      return res.status(404).json({ message: "Rol no encontrado" });
     }
 
-    res.json(usuario.favoritos); // Devuelve la lista completa de productos favoritos
+    res.json(rol.favoritos); // Devuelve la lista completa de productos favoritos
   } catch (error) {
-    res.status(500).json({ message: "Error al obtener los favoritos" + error });
+    res.status(500).json({ message: "Error al obtener los favoritos", error });
   }
 };
 
 // Controlador para actualizar un usuario existente
 exports.updateUsuario = async (req, res) => {
-  const { id } = req.params; // Obtener el ID del usuario de los parámetros de la solicitud
-  const { nombre, apellido, email, password, rolId } = req.body; // Obtener los datos del cuerpo de la solicitud
+  const { id } = req.params;
+  const { nombre, apellido, email, password, rolId } = req.body;
 
   try {
-    // Verificar si el usuario existe
     const usuario = await Usuario.findByPk(id);
     if (!usuario) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    // Actualizar la contraseña si se proporciona una nueva
-    let hashedPassword = usuario.password; // Usar la contraseña existente por defecto
+    let hashedPassword = usuario.password;
     if (password) {
-      hashedPassword = await bcrypt.hash(password, 10); // Encriptar la nueva contraseña
+      hashedPassword = await bcrypt.hash(password, 10);
     }
-
-    // Actualizar los datos del usuario
     await usuario.update(
       {
         nombre,
         apellido,
         email,
-        password: hashedPassword, // Usar la contraseña actualizada
+        password: hashedPassword,
         rolId,
       },
-      { fields: ["nombre", "apellido", "email", "password", "rolId"] } // Campos permitidos para actualizar
+      { fields: ["nombre", "apellido", "email", "password", "rolId"] }
     );
 
     res.json({ message: "Usuario actualizado exitosamente", usuario });

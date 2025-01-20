@@ -42,7 +42,7 @@ router.delete('/caracteristicas/:id', caracteristicaController.deleteCaracterist
 
 //Rutas para favoritos
 router.post("/favoritos", usuarioController.toggleFavorito);
-router.get("/favoritos/:usuarioId", usuarioController.obtenerFavoritos);
+router.get("/favoritos/:rolId", usuarioController.obtenerFavoritos);
 
 // Ruta para obtener el detalle de reserva temporal
 router.post('/detalle', reservaController.obtenerDetalleReserva);
